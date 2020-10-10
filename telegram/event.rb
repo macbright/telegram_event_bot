@@ -4,16 +4,24 @@ require 'telegram/bot'
 
 TOKEN = '1173859008:AAH4z5gonpnQSnoL5OQvEcWcp1ROD05cYOs'
 
+def displayMessage(message)
+  Telegram::Bot::Client.run(TOKEN) do |bot|
+    bot.api.send_message(chat_id: message.chat.id, text: "Type '/add' to add an event ")
+    bot.api.send_message(chat_id: message.chat.id, text: "Type '/view_events' to view all events")
+    bot.api.send_message(chat_id: message.chat.id, text: "Type '/delete' to delete event created by you")
+  end
+end
 
 
 Telegram::Bot::Client.run(TOKEN) do |bot|
 
   bot.listen do |message|
+
     if !User.exists?(telegram_id: message.from.id)
-      user = User.create(telegram_id: message.chat.id)
-      # user.step = 'name'
-      # user.save
-      # bot.api.send_message(chat_id: message.chat.id, text: "Enter your name") 
+      user = User.create(telegram_id: message.chat.id, name: message.from.first_name, 
+      email: "#{message.chat.username}@gmail.com")
+      bot.api.send_message(chat_id: message.chat.id, text: "Your account has been create with your telegram username")
+      displayMessage(message)
     else  
       user = User.find_by(telegram_id: message.chat.id)
     end
@@ -31,10 +39,12 @@ Telegram::Bot::Client.run(TOKEN) do |bot|
       user.step = nil
       user.save
       bot.api.send_message(chat_id: message.chat.id, text: "Your event have been successfully created!")
+      displayMessage(message)
     when 'deleted'
       if user.events.map{ |event| event.description}.include?(message.text)
         Event.find_by(description: message.text).destroy
-         bot.api.send_message(chat_id: message.chat.id, text: "Event deleted successfully")
+        bot.api.send_message(chat_id: message.chat.id, text: "Event deleted successfully")
+        displayMessage(message)
       else 
         bot.api.send_message(chat_id: message.chat.id, text: "selected event not in the database")
       end
@@ -46,19 +56,10 @@ Telegram::Bot::Client.run(TOKEN) do |bot|
 
     case message.text
     when '/add'
-      if user.email === nil 
-        bot.api.send_message(chat_id: message.chat.id, text: "Enter you email in order to create an event")
-        user.email = message.text
-        user.save
-      elsif user.name === nil 
-        bot.api.send_message(chat_id: message.chat.id, text: "Enter you name in order to create an event")
-        user.name = message.text
-        user.save
-      else 
-        user.step = 'add'
-        user.save
-        bot.api.send_message(chat_id: message.chat.id, text: "Enter your event description")
-      end
+      user.step = 'add'
+      user.save
+      bot.api.send_message(chat_id: message.chat.id, text: "Enter your event description")
+      
     when '/view_events'
       bot.api.send_message(chat_id: message.chat.id, text: "--------------------------------")
       bot.api.send_message(chat_id: message.chat.id, text: "below are the list of events")
@@ -68,6 +69,7 @@ Telegram::Bot::Client.run(TOKEN) do |bot|
         bot.api.send_message(chat_id: message.chat.id, text: "#{event.date}")
         bot.api.send_message(chat_id: message.chat.id, text: "_________________________")
       end
+        displayMessage(message)
       user.step = nil
       user.save
     when '/delete'
