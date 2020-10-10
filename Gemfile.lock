@@ -80,6 +80,9 @@ GEM
       descendants_tracker (~> 0.0.1)
     concurrent-ruby (1.1.7)
     crass (1.0.6)
+    crono (1.1.2)
+      activerecord (>= 4.0)
+      activesupport (>= 4.0)
     descendants_tracker (0.0.4)
       thread_safe (~> 0.3, >= 0.3.1)
     equalizer (0.0.11)
@@ -224,6 +227,7 @@ DEPENDENCIES
   bootsnap (>= 1.4.2)
   byebug
   capybara (>= 2.15)
+  crono
   jbuilder (~> 2.7)
   listen (~> 3.2)
   pg
