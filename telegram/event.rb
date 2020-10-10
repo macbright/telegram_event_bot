@@ -13,6 +13,13 @@ def displayMessage(message)
   end
 end
 
+def display_event_as_key(message, event)
+  Telegram::Bot::Client.run(TOKEN) do |bot|
+    markup = Telegram::Bot::Types::ReplyKeyboardMarkup.new(keyboard: event)
+    bot.api.send_message(chat_id: message.chat.id, text: "display", reply_markup: markup)
+  end
+end
+
 
 Telegram::Bot::Client.run(TOKEN) do |bot|
 
@@ -66,33 +73,44 @@ Telegram::Bot::Client.run(TOKEN) do |bot|
       bot.api.send_message(chat_id: message.chat.id, text: "--------------------------------")
       bot.api.send_message(chat_id: message.chat.id, text: "below are the list of events")
       bot.api.send_message(chat_id: message.chat.id, text: "--------------------------------")
+      arr = []
       Event.all.each do |event|
         bot.api.send_message(chat_id: message.chat.id, text: "#{event.description}")
         bot.api.send_message(chat_id: message.chat.id, text: "#{event.date}")
         bot.api.send_message(chat_id: message.chat.id, text: "_________________________")
+        event_and_date = "EVENT DESCRIPTION:  #{event.description}  " + "  EVENT DATE:  #{event.date}"
+        arr << event_and_date
       end
+      display_event_as_key(message, arr)
       displayMessage(message)
       user.step = nil
       user.save
+      message.text = nil
     when '/delete'
       user.step = 'deleted'
       user.save
       current_user_events = user.events.map{|event| event.description }
       markup = Telegram::Bot::Types::ReplyKeyboardMarkup.new(keyboard: current_user_events)
       bot.api.send_message(chat_id: message.chat.id, text: "select event to delete ", reply_markup: markup)
+      message.text = nil
     when '/notify'
       bot.api.send_message(chat_id: message.chat.id, text: "*********************************")
       bot.api.send_message(chat_id: message.chat.id, 
-      text: "Hello #{message.chat.username} below are the list of upcoming Events. Plan to attend ")
+      text: "Hello #{message.chat.username} below are the list of upcoming Events. Plan to attend.  ")
       bot.api.send_message(chat_id: message.chat.id, text: "**********************************")
+      arr = []
       Event.all.each do |event|
-        p Event.upcoming_event(event)
         if Event.upcoming_event(event) 
-          bot.api.send_message(chat_id: message.chat.id, text: "#{event.description}")
-          bot.api.send_message(chat_id: message.chat.id, text: "#{event.date}")
+          bot.api.send_message(chat_id: message.chat.id, text: "Event Description:  #{event.description}")
+          bot.api.send_message(chat_id: message.chat.id, text: "Event Date:  #{event.date}")
           bot.api.send_message(chat_id: message.chat.id, text: "----------------------------")
+          event_and_date = "EVENT DESCRIPTION:  #{event.description}  " + "   EVENT DATE:  #{event.date}"
+          arr << event_and_date
         end
       end
+      displayMessage(message)
+      display_event_as_key(message, arr)
+      message.text = nil
     end
   end
 end

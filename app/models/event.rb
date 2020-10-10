@@ -6,7 +6,8 @@ class Event < ApplicationRecord
     event = evnt.date.split('/')
     evnt_month = event[0].to_i
     evnt_day = event[1].to_i
-    evnt_year = event[3].to_i
+    evnt_year = event[2].to_i
+    p evnt_year + evnt_month + evnt_day
 
     today_date = Date.today.strftime()
     today_date = today_date.split('-')
@@ -15,20 +16,19 @@ class Event < ApplicationRecord
     curr_year = today_date[0].to_i
     result = false
     
-    if evnt_day > curr_day && evnt_month == curr_month && evnt_year == curr_year
-      result = true
+    if evnt_day > curr_day && evnt_month >= curr_month && evnt_year >= curr_year
+      return true
     elsif  evnt_month > curr_month && evnt_year >= curr_year
-      result = true
+      return true
     elsif evnt_day >= curr_day && evnt_month > curr_month && evnt_year >= curr_year
-      result = true
+      return true
     elsif evnt_day > curr_day && evnt_month >= curr_month && evnt_year >= curr_year
-      result = true 
+      return true 
     elsif evnt_day < curr_day && evnt_month <= curr_month && evnt_year > curr_year
-      result = true
+      return true
     elsif evnt_day > curr_day && evnt_month <= curr_month && evnt_year > curr_year
-      result = true
+      return true
     end
-    
     result
   end
 end
