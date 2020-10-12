@@ -1,1 +1,1 @@
-worker: ruby telegram/event.rb
+bot: ruby telegram/event.rb
