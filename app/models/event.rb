@@ -31,4 +31,15 @@ class Event < ApplicationRecord
     end
     result
   end
+
+  def self.event_lists
+    list_of_upcoming_events = []
+    Event.all.each do |event|
+      if self.upcoming_event(event)
+        list_of_upcoming_events << event 
+      end
+    end
+    list_of_upcoming_events
+  end
+
 end

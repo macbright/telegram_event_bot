@@ -2,6 +2,11 @@ require File.expand_path('../config/environment', __dir__)
 
 require 'telegram/bot'
 
+require 'rufus-scheduler'
+
+scheduler = Rufus::Scheduler.new
+
+
 TOKEN = '1173859008:AAH4z5gonpnQSnoL5OQvEcWcp1ROD05cYOs'
 
 def displayMessage(message)
@@ -13,6 +18,32 @@ def displayMessage(message)
   end
 end
 
+def get_notify(message)
+  Telegram::Bot::Client.run(TOKEN) do |bot|
+    if Event.event_lists.length > 0
+      scheduler.every '1m' do
+        bot.api.send_message(chat_id: message.chat.id, text: "<b> .....................</b> ")
+        bot.api.send_message(chat_id: message.chat.id, text: "<b> UPCOMING EVENTS </b> ")
+        bot.api.send_message(chat_id: message.chat.id, text: "<b> .....................</b> ")
+        Event.event_lists.each do |event|
+          bot.api.send_message(chat_id: message.chat.id, text: "Event Description:  #{event.description}")
+          bot.api.send_message(chat_id: message.chat.id, text: "Event Date:  #{event.date}")
+          bot.api.send_message(chat_id: message.chat.id, text: "_________________________")
+        end
+      end
+    else 
+      bot.api.send_message(chat_id: message.chat.id, text: "<b> <i> Sorry you have no upcoming event </i></b> ")
+    end
+   end
+end
+
+def remove_keyboard(message)
+  Telegram::Bot::Client.run(TOKEN) do |bot|
+    kb = Telegram::Bot::Types::ReplyKeyboardRemove.new(remove_keyboard: true)
+    bot.api.send_message(chat_id: message.chat.id, text: 'ok', reply_markup: kb)
+  end
+end
+
 def display_event_as_key(message, event)
   Telegram::Bot::Client.run(TOKEN) do |bot|
     markup = Telegram::Bot::Types::ReplyKeyboardMarkup.new(keyboard: event)
@@ -21,7 +52,8 @@ def display_event_as_key(message, event)
 end
 
 
-Telegram::Bot::Client.run(TOKEN) do |bot|
+Telegram::Bot::Client.run(TOKEN, logger: Logger.new($stderr)) do |bot|
+  bot.logger.info('Bot has been started')
 
   bot.listen do |message|
 
@@ -59,6 +91,7 @@ Telegram::Bot::Client.run(TOKEN) do |bot|
       end
       user.step = nil
       user.save
+      remove_keyboard(message)
     when 'view_events'
 
     end
@@ -67,8 +100,8 @@ Telegram::Bot::Client.run(TOKEN) do |bot|
     when '/add'
       user.step = 'add'
       user.save
+      remove_keyboard(message)
       bot.api.send_message(chat_id: message.chat.id, text: "Enter your event description")
-      
     when '/view_events'
       bot.api.send_message(chat_id: message.chat.id, text: "--------------------------------")
       bot.api.send_message(chat_id: message.chat.id, text: "below are the list of events")
@@ -87,6 +120,7 @@ Telegram::Bot::Client.run(TOKEN) do |bot|
       user.save
       message.text = nil
     when '/delete'
+      remove_keyboard(message)
       user.step = 'deleted'
       user.save
       current_user_events = user.events.map{|event| event.description }
@@ -94,22 +128,8 @@ Telegram::Bot::Client.run(TOKEN) do |bot|
       bot.api.send_message(chat_id: message.chat.id, text: "select event to delete ", reply_markup: markup)
       message.text = nil
     when '/notify'
-      bot.api.send_message(chat_id: message.chat.id, text: "*********************************")
-      bot.api.send_message(chat_id: message.chat.id, 
-      text: "Hello #{message.chat.username} below are the list of upcoming Events. Plan to attend.  ")
-      bot.api.send_message(chat_id: message.chat.id, text: "**********************************")
-      arr = []
-      Event.all.each do |event|
-        if Event.upcoming_event(event) 
-          bot.api.send_message(chat_id: message.chat.id, text: "Event Description:  #{event.description}")
-          bot.api.send_message(chat_id: message.chat.id, text: "Event Date:  #{event.date}")
-          bot.api.send_message(chat_id: message.chat.id, text: "----------------------------")
-          event_and_date = "EVENT DESCRIPTION:  #{event.description}  " + "   EVENT DATE:  #{event.date}"
-          arr << event_and_date
-        end
-      end
+      get_notify(message)
       displayMessage(message)
-      display_event_as_key(message, arr)
       message.text = nil
     end
   end
