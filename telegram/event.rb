@@ -24,7 +24,7 @@ def get_notify(message)
     if Event.event_lists.length > 0
       bot.api.send_message(chat_id: message.chat.id, 
       text: "You will get Notifications of upcoming events every 1 minute ")
-      scheduler.every '1m' do
+      scheduler.every '60m' do
         bot.api.send_message(chat_id: message.chat.id, text: "..................................")
         bot.api.send_message(chat_id: message.chat.id, text: "UPCOMING EVENTS ")
         bot.api.send_message(chat_id: message.chat.id, text: "..................................")
