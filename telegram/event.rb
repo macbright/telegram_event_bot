@@ -23,7 +23,7 @@ def get_notify(message)
   Telegram::Bot::Client.run(TOKEN) do |bot|
     if Event.event_lists.length > 0
       bot.api.send_message(chat_id: message.chat.id, 
-      text: "You will get Notifications of upcoming events every 1 minute ")
+      text: "You will get Notifications of upcoming events every 60 minute ")
       scheduler.every '60m' do
         bot.api.send_message(chat_id: message.chat.id, text: "..................................")
         bot.api.send_message(chat_id: message.chat.id, text: "UPCOMING EVENTS ")
