@@ -7,7 +7,7 @@ require 'rufus-scheduler'
 scheduler = Rufus::Scheduler.new
 
 
-TOKEN = '1173859008:AAH4z5gonpnQSnoL5OQvEcWcp1ROD05cYOs'
+TOKEN = '1126430971:AAGW9KAetxLHLowMyBOet2cmm9Xzk5YaiAY'
 
 def displayMessage(message)
   Telegram::Bot::Client.run(TOKEN) do |bot|
