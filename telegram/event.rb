@@ -19,12 +19,15 @@ def displayMessage(message)
 end
 
 def get_notify(message)
+  scheduler = Rufus::Scheduler.new
   Telegram::Bot::Client.run(TOKEN) do |bot|
     if Event.event_lists.length > 0
+      bot.api.send_message(chat_id: message.chat.id, 
+      text: "You will get Notifications of upcoming events every 1 minute ")
       scheduler.every '1m' do
-        bot.api.send_message(chat_id: message.chat.id, text: "<b> .....................</b> ")
-        bot.api.send_message(chat_id: message.chat.id, text: "<b> UPCOMING EVENTS </b> ")
-        bot.api.send_message(chat_id: message.chat.id, text: "<b> .....................</b> ")
+        bot.api.send_message(chat_id: message.chat.id, text: "..................................")
+        bot.api.send_message(chat_id: message.chat.id, text: "UPCOMING EVENTS ")
+        bot.api.send_message(chat_id: message.chat.id, text: "..................................")
         Event.event_lists.each do |event|
           bot.api.send_message(chat_id: message.chat.id, text: "Event Description:  #{event.description}")
           bot.api.send_message(chat_id: message.chat.id, text: "Event Date:  #{event.date}")
@@ -32,15 +35,17 @@ def get_notify(message)
         end
       end
     else 
-      bot.api.send_message(chat_id: message.chat.id, text: "<b> <i> Sorry you have no upcoming event </i></b> ")
+      bot.api.send_message(chat_id: message.chat.id, text: "Sorry you have no upcoming event")
     end
    end
 end
 
+
+
 def remove_keyboard(message)
   Telegram::Bot::Client.run(TOKEN) do |bot|
     kb = Telegram::Bot::Types::ReplyKeyboardRemove.new(remove_keyboard: true)
-    bot.api.send_message(chat_id: message.chat.id, text: 'ok', reply_markup: kb)
+    bot.api.send_message(chat_id: message.chat.id, text: "Enter '/add' to enter event", reply_markup: kb)
   end
 end
 
@@ -103,22 +108,27 @@ Telegram::Bot::Client.run(TOKEN, logger: Logger.new($stderr)) do |bot|
       remove_keyboard(message)
       bot.api.send_message(chat_id: message.chat.id, text: "Enter your event description")
     when '/view_events'
-      bot.api.send_message(chat_id: message.chat.id, text: "--------------------------------")
-      bot.api.send_message(chat_id: message.chat.id, text: "below are the list of events")
-      bot.api.send_message(chat_id: message.chat.id, text: "--------------------------------")
-      arr = []
-      Event.all.each do |event|
-        bot.api.send_message(chat_id: message.chat.id, text: "#{event.description}")
-        bot.api.send_message(chat_id: message.chat.id, text: "#{event.date}")
-        bot.api.send_message(chat_id: message.chat.id, text: "_________________________")
-        event_and_date = "EVENT DESCRIPTION:  #{event.description}  " + "  EVENT DATE:  #{event.date}"
-        arr << event_and_date
+      if Event.all.length > 0
+        bot.api.send_message(chat_id: message.chat.id, text: "--------------------------------")
+        bot.api.send_message(chat_id: message.chat.id, text: "below are the list of events")
+        bot.api.send_message(chat_id: message.chat.id, text: "--------------------------------")
+        
+        arr = []
+        Event.all.each do |event|
+          bot.api.send_message(chat_id: message.chat.id, text: "#{event.description}")
+          bot.api.send_message(chat_id: message.chat.id, text: "#{event.date}")
+          bot.api.send_message(chat_id: message.chat.id, text: "_________________________")
+          event_and_date = "EVENT DESCRIPTION:  #{event.description}  " + "  EVENT DATE:  #{event.date}"
+          arr << event_and_date
+        end
+        display_event_as_key(message, arr)
+        displayMessage(message)
+        user.step = nil
+        user.save
+        message.text = nil
+      else 
+        bot.api.send_message(chat_id: message.chat.id, text: "No event to view")
       end
-      display_event_as_key(message, arr)
-      displayMessage(message)
-      user.step = nil
-      user.save
-      message.text = nil
     when '/delete'
       remove_keyboard(message)
       user.step = 'deleted'
@@ -130,7 +140,13 @@ Telegram::Bot::Client.run(TOKEN, logger: Logger.new($stderr)) do |bot|
     when '/notify'
       get_notify(message)
       displayMessage(message)
+      remove_keyboard(message)
       message.text = nil
+      bot.api.send_message(chat_id: message.chat.id, text: "Enter '/cancel_notification' to cancel all notifications")
+    when '/cancel_notification'
+      scheduler.shutdown if scheduler
+      bot.api.send_message(chat_id: message.chat.id, text: "Notification canceled")
+      displayMessage(message)
     end
   end
 end
