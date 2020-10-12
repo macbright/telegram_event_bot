@@ -7,7 +7,6 @@ class Event < ApplicationRecord
     evnt_month = event[0].to_i
     evnt_day = event[1].to_i
     evnt_year = event[2].to_i
-    p evnt_year + evnt_month + evnt_day
 
     today_date = Date.today.strftime()
     today_date = today_date.split('-')
